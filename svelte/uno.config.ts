@@ -14,7 +14,10 @@ import {
 } from 'unocss'
 
 export default defineConfig({
-  // ...UnoCSS options
+  shortcuts: {
+    'btn': 'px-4 py-2 b-none rounded-lg cursor-pointer text-lg font-bold text-white bg-primary hover:bg-secondary transition',
+    'btn-outer': 'p-2 m-2 cursor-pointer bg-transparent b-none',
+  },
   presets: [
     presetUno(),
     presetAttributify(),
