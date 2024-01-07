@@ -11,12 +11,14 @@ import {
 
   // transformers
   transformerAttributifyJsx,
+  transformerVariantGroup,
 } from 'unocss'
 
 export default defineConfig({
   shortcuts: {
     'btn': 'px-4 py-2 b-none rounded-lg cursor-pointer text-lg font-bold text-white bg-primary hover:bg-secondary transition',
     'btn-outer': 'p-2 m-2 cursor-pointer bg-transparent b-none',
+    'big-btn': 'm-10 cursor-pointer shadow-(2xl black opacity-40) transition hover:opacity-80 focus:(outline-(~ 5 white)) active:translate-y-3',
   },
   presets: [
     presetUno(),
@@ -33,6 +35,7 @@ export default defineConfig({
   ],
   transformers: [
     transformerAttributifyJsx(),
+    transformerVariantGroup(),
   ],
   theme: {
     colors: {
