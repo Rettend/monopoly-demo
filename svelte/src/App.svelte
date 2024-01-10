@@ -3,37 +3,35 @@
   import Auction from './lib/Auction.svelte'
   import Build from './lib/Build.svelte'
   import Timer from './lib/Timer.svelte'
-  import { canEnd, status } from './lib/store'
-
-  let hours = 0
-  let start = false
-  let ending = false
+  import { status } from './lib/store.svelte'
 
   const gameTimes = [1, 2, 4]
 
+  let hours = $state(0)
+  let ending = $state(false)
+
   function startGame(time: number) {
-    start = true
+    status.reset()
     hours = time
   }
 
-  function endGame(canEnd: boolean, ending: boolean) {
-    if (canEnd && ending) {
+  $effect(() => {
+    if (status.idle && ending) {
       const endAudio = new Audio(EndAudio)
       endAudio.play()
+      status.value = 'ended'
     }
-  }
-
-  $: endGame($canEnd, ending)
+  })
 
   function startBuild() {
-    if ($canEnd)
-      $status.build = true
+    if (status.idle)
+      status.value = 'build'
   }
 
 </script>
 
 <main font-base text-center text-light w-full h-full>
-  {#if !start}
+  {#if status.value === 'landing'}
     <div flex='~ col' items-center>
       <div>
         <h2>Monopoly City</h2>
@@ -41,7 +39,7 @@
       </div>
       <h3>Start a game by choosing your game time:</h3>
       {#each gameTimes as time}
-        <button btn-outer on:click={() => startGame(time)}>
+        <button btn-outer onclick={() => startGame(time)}>
           <span btn>{time} hour{time > 1 ? 's' : ''}</span>
         </button>
       {/each}
@@ -52,7 +50,7 @@
         <Timer start={{ hours }} on:end={() => ending = true} />
       </span>
       <Auction />
-      <Build on:click={startBuild} />
+      <Build onclick={startBuild} />
     </div>
   {/if}
 </main>

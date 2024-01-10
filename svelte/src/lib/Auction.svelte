@@ -1,9 +1,10 @@
 <script lang='ts'>
   import { flip } from 'svelte/animate'
   import { cubicOut } from 'svelte/easing'
+  import { untrack } from 'svelte'
   import BopAudioFile from '../../../common/bop.mp3'
   import Timer from './Timer.svelte'
-  import { status } from './store'
+  import { status } from './store.svelte'
 
   const buildings = ['train', '1', '2', '3']
   const icons = ['i-ph-train-simple-bold', 'i-ph-number-one-bold', 'i-ph-number-two-bold', 'i-ph-number-three-bold']
@@ -14,23 +15,34 @@
     'mb-30 ml-60',
   ]
 
-  let highlightedBuilding = 0
+  let highlightedBuilding = $state(0)
   let timeoutId: number | null = null
 
-  $: if ($status.build) {
-    startBuild()
+  $effect(() => {
+    if (status.value === 'build') {
+      startBuild()
 
-    setTimeout(() => {
-      highlightedBuilding = Math.floor(Math.random() * 4)
-      $status.build = false
-    }, 10000)
-  }
+      setTimeout(() => {
+        highlightedBuilding = Math.floor(Math.random() * 4)
+        status.reset()
+      }, 10000)
+    }
+    else if (timeoutId) {
+      clearTimeout(timeoutId)
+      timeoutId = null
+
+      status.value = 'result'
+      setTimeout(() => {
+        status.reset()
+      }, 3000)
+    }
+  })
 
   function startBuild() {
     let speed = 1000
 
     const animate = () => {
-      highlightedBuilding = (highlightedBuilding + 1) % buildings.length
+      untrack(() => highlightedBuilding = (highlightedBuilding + 1) % buildings.length)
       playSound()
       speed *= 0.9
       timeoutId = setTimeout(animate, speed)
@@ -53,30 +65,20 @@
     bopAudio.play()
   }
 
-  $: if (!$status.build && timeoutId) {
-    clearTimeout(timeoutId)
-    timeoutId = null
-
-    $status.result = true
-    setTimeout(() => {
-      $status.result = false
-    }, 3000)
-  }
-
-  let skip = false
+  let skip = $state(false)
 
   function startAuction() {
-    if ($status.build || $status.result)
+    if (status.value === 'build' || status.value === 'result' || status.value === 'ended')
       return
 
-    if ($status.auction)
+    if (status.value === 'auction')
       skip = true
 
-    $status.auction = true
+    status.value = 'auction'
   }
 
   function endAuction() {
-    $status.auction = false
+    status.reset()
     skip = false
   }
 </script>
@@ -91,11 +93,11 @@
     <span m--4 absolute class={icons[i]} />
   </span>
 {/each}
-<button on:click={startAuction} big-btn w-50 h-50 rounded-full b-none bg-gray p-10 text-light>
-  {#if $status.result}
+<button onclick={startAuction} big-btn w-50 h-50 rounded-full b-none bg-gray p-10 text-light>
+  {#if status.value === 'result'}
     <div class={icons[highlightedBuilding]} m-a text-9xl />
   {:else}
-    {#if $status.auction}
+    {#if status.value === 'auction'}
       <Timer start={{ seconds: 59 }} {skip} short={true} on:end={endAuction} />
     {:else}
       <div i-ph-handshake-duotone m-a text-9xl />
